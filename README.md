@@ -48,7 +48,14 @@ Reportes de solo lectura del sistema bancario (P2, paso 2.6). Ficha:
   | Controller | Códigos 400/404/422/501/503, parámetros obligatorios y fuera de rango |
   | Fuera de P2 | Roles y `CUSTOMER` sobre productos ajenos (P3, con seguridad), proyección y consultas Mongo (P3) |
 - [x] R9. Postman: carpeta `report-service` en `bankacme.postman_collection.json` (entre la de VIP/PYME y la del Gateway), variable `reportBaseUrl` = `http://localhost:8080/api/v1`. 15 requests: reporte completo del ahorro de A (cabecera, resumen, orden, saldo final = movimiento más reciente), página 2 con el mismo resumen, reporte del crédito de A, últimos 10 y últimos 2 de la tarjeta de A, tarjetas de A y de un cliente sin tarjetas, y los errores 400/404/501. Intervalo fijo de 2026. Verificada contra los datos reales (40 comprobaciones).
-- [ ] R10. Cierre.
+- [x] R10. Cierre: README, diagramas de la ficha (§11) en `docs/` (Mermaid validado con `mmdc`) y etiqueta (`report-v1`, la pone el usuario). Durante las pruebas de R7 se detectó y corrigió en transaction-service que las patas de transferencia no registraban su comisión `FEE`.
+
+## Diagramas
+- `docs/uml/report-domain.md`: modelo de lectura (`ReportProduct`, `ReportMovement`), VO, resultados, calculadoras y reglas.
+- `docs/sequence/product-report-p2.md`: reporte completo de un producto en P2 (validación, cabecera, conteo y tope, todas las páginas + saldo inicial en paralelo, resumen y página).
+- `docs/sequence/card-last-movements.md`: últimos 10 movimientos de una tarjeta.
+- `docs/sequence/customer-cards.md`: tarjetas de un cliente con sus últimos movimientos.
+- Pendientes para P3 (dependen del read model): reporte de producto con el read model y proyección de un evento.
 
 ## Comandos
 - Compilar, estilo, tests y cobertura: `.\mvnw verify` (reporte en `target/site/jacoco/index.html`)
