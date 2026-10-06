@@ -27,10 +27,16 @@ Reportes de solo lectura del sistema bancario (P2, paso 2.6). Ficha:
   - `GetLastMovementsUseCaseImpl` (10 por defecto, 1–50) y `GetCustomerCardsReportUseCaseImpl` (tarjetas de cualquier estado, 10 movimientos cada una, sin 404, `debitCardsIncluded` según la fuente).
   - `ReportSettings`: límites del Config Server. El reporte por categoría no tiene caso de uso en P2 (501).
   - Pruebas con `InMemorySources` (implementa ambos puertos y registra las llamadas).
-- [ ] R4. Persistencia: no aplica en P2 (read model en P3).
-- [ ] R5. Controller y `GlobalExceptionHandler`.
-- [ ] R6. Configuración y arranque.
-- [ ] R7. Clientes REST a las tres fuentes.
+- [x] R4. Persistencia: no aplica en P2 (read model en P3).
+- [x] R5. `ReportController` (implementa `ReportsApi` generado) y `GlobalExceptionHandler`:
+  - `productType` de la ruta (`accounts`, `credits`, `credit-cards`, `debit-cards`) lo traduce `ReportRestMapper`; otro valor → 400 `VALIDATION_ERROR` sin llamar al caso de uso.
+  - 400 `INVALID_RANGE`, 404 `PRODUCT_NOT_FOUND`, 422 `RANGE_TOO_LARGE`, 501 `NOT_AVAILABLE`, 503 `SERVICE_UNAVAILABLE`; fechas mal escritas, `from`/`to` ausentes, `limit`/`size` fuera de rango → 400 `VALIDATION_ERROR`.
+  - `GET /reports/product-categories/{category}` → 501 (desde P3).
+- [x] R6. `UseCaseConfig` (casos de uso, calculadoras y `ReportSettings` desde `report.*`) y `ClockConfig` (`bank.zone`). Se hizo junto con R5 y R7: el contexto completo necesita los casos de uso y sus puertos.
+- [x] R7. Adaptadores REST (`adapter/out/rest`), cada fuente con circuit breaker y timeout de 2 s (`RestSource`: 404 → vacío; cualquier otra falla → 503):
+  - `ProductRestAdapter`: `GET /accounts/{id}`, `/credits/{id}`, `/credit-cards/{id}` y `/credit-cards?customerId=`; categoría, estado y cabecera según data-model 3.1; `debit-cards` → 501.
+  - `MovementRestAdapter`: siempre `GET /products/{id}/transactions?status=COMPLETED`. Conteo con `size=1` (`totalElements`), intervalo completo recorriendo páginas de 100, saldo inicial con `to = from − 1` sin `from` y `size=1`, últimos N con `size=N`.
+  - Pruebas con WireMock: mapeo de campos, varias páginas, 404, 500 y timeout.
 - [ ] R8. Calidad.
 - [ ] R9. Postman.
 - [ ] R10. Cierre.
