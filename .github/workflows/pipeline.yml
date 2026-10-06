@@ -1,0 +1,19 @@
+# Llama al pipeline común de bank-platform (pruebas, Checkstyle, cobertura e imagen en Docker Hub).
+# Flujo: se trabaja en develop → PR develop → main (se valida) → merge (se publica latest).
+# Versión fija: git tag report-v1 && git push origin report-v1 (publica la etiqueta v1).
+name: pipeline
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+    tags: ['report-v*']
+
+jobs:
+  pipeline:
+    uses: bankacme/bank-platform/.github/workflows/service-pipeline.yml@main
+    with:
+      service: report-service
+      mongo: false
+    secrets: inherit
