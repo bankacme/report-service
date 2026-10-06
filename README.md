@@ -14,7 +14,13 @@ Reportes de solo lectura del sistema bancario (P2, paso 2.6). Ficha:
 - [x] R1. Esqueleto: desde `bank-service-template`, paquete `com.bank.report`, contrato copiado a
   `src/main/resources/openapi/`, `bank-config/report-service.yml`. Sin Mongo (P2). Resilience4j y
   WireMock como en los demás servicios con clientes REST; `LoadBalancerConfig` para llamar por nombre.
-- [ ] R2. Dominio: `DateRange`, `PageRequest`, `Money`, modelo de lectura, `ProductReportCalculator`, `LastMovementsSelector`.
+- [x] R2. Dominio (`domain/`, sin Spring):
+  - Modelo de lectura: `ReportProduct`, `ReportMovement` (con el orden `MOST_RECENT_FIRST`: `occurredAt` y luego `movementId`, descendentes), `ProductAttributes` (y `mask` del número de cuenta).
+  - VO: `Money`, `DateRange` (366 días contando ambos extremos → `InvalidRangeException`; `[from 00:00, to+1 00:00)` en `bank.zone`), `PageRequest` (por defecto 0/20), `MovementPage.slice` (página en memoria de la lista ordenada).
+  - Resultados: `ReportSummary`, `TypeTotal`, `ProductReport`, `LastMovementsReport`, `CardMovements`, `CustomerCardsReport`.
+  - `ProductReportCalculator` (Streams: solo `COMPLETED`, totales por tipo en orden alfabético como el contrato, comisiones, saldo inicial y final) y `LastMovementsSelector`.
+  - Excepciones: `ProductNotFoundException` (404), `InvalidRangeException` (400), `RangeTooLargeException` (422), `NotAvailableException` (501), `DownstreamServiceUnavailableException` (503).
+  - `CategoryReportCalculator` no se hace en P2: el reporte por categoría responde 501 hasta P3.
 - [ ] R3. Casos de uso y puertos (`ProductQueryPort`, `MovementQueryPort`).
 - [ ] R4. Persistencia: no aplica en P2 (read model en P3).
 - [ ] R5. Controller y `GlobalExceptionHandler`.
