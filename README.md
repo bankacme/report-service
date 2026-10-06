@@ -21,7 +21,12 @@ Reportes de solo lectura del sistema bancario (P2, paso 2.6). Ficha:
   - `ProductReportCalculator` (Streams: solo `COMPLETED`, totales por tipo en orden alfabético como el contrato, comisiones, saldo inicial y final) y `LastMovementsSelector`.
   - Excepciones: `ProductNotFoundException` (404), `InvalidRangeException` (400), `RangeTooLargeException` (422), `NotAvailableException` (501), `DownstreamServiceUnavailableException` (503).
   - `CategoryReportCalculator` no se hace en P2: el reporte por categoría responde 501 hasta P3.
-- [ ] R3. Casos de uso y puertos (`ProductQueryPort`, `MovementQueryPort`).
+- [x] R3. Casos de uso y puertos (`application/`, sin Spring):
+  - Puertos de salida: `ProductQueryPort` (`findById`, `findCardsByCustomer`, `debitCardsAvailable`) y `MovementQueryPort` (`countInRange`, `findInRange`, `findLastUpTo` para el saldo inicial, `findLast`).
+  - `GenerateProductReportUseCaseImpl`: valida intervalo y página antes de llamar a nadie (400) → cabecera (404) → cuenta y rechaza si pasa `report.max-movements` (422, sin traerlos) → todos los del intervalo + el anterior → resumen de todo el intervalo y página en memoria.
+  - `GetLastMovementsUseCaseImpl` (10 por defecto, 1–50) y `GetCustomerCardsReportUseCaseImpl` (tarjetas de cualquier estado, 10 movimientos cada una, sin 404, `debitCardsIncluded` según la fuente).
+  - `ReportSettings`: límites del Config Server. El reporte por categoría no tiene caso de uso en P2 (501).
+  - Pruebas con `InMemorySources` (implementa ambos puertos y registra las llamadas).
 - [ ] R4. Persistencia: no aplica en P2 (read model en P3).
 - [ ] R5. Controller y `GlobalExceptionHandler`.
 - [ ] R6. Configuración y arranque.
