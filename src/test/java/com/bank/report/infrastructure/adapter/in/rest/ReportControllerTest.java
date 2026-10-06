@@ -188,4 +188,20 @@ class ReportControllerTest {
                 .expectStatus().isBadRequest()
                 .expectBody().jsonPath("$.code").isEqualTo("VALIDATION_ERROR");
     }
+
+    @Test
+    void aCustomerIdLongerThan36Is400() {
+        client.get().uri("/api/v1/reports/customers/" + "x".repeat(37) + "/cards/last-movements").exchange()
+                .expectStatus().isBadRequest()
+                .expectBody().jsonPath("$.code").isEqualTo("VALIDATION_ERROR");
+        verifyNoInteractions(getCustomerCardsReportUseCase);
+    }
+
+    @Test
+    void aPageSizeAbove100Is400() {
+        client.get().uri("/api/v1/reports/products/accounts/" + A1 + "?from=2026-09-01&to=2026-09-30&size=101")
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody().jsonPath("$.code").isEqualTo("VALIDATION_ERROR");
+    }
 }

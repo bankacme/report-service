@@ -54,4 +54,12 @@ class DateRangeTest {
         assertThat(september.contains(Instant.parse("2026-10-01T05:00:00Z"), LIMA)).isFalse();
         assertThat(september.dayBefore()).isEqualTo(LocalDate.of(2026, 8, 31));
     }
+
+    @Test
+    void theRecordItselfRequiresBothDates() {
+        assertThatThrownBy(() -> new DateRange(LocalDate.of(2026, 9, 1), null))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> DateRange.of(LocalDate.of(2026, 9, 1), null, 366))
+                .isInstanceOf(InvalidRangeException.class);
+    }
 }

@@ -143,4 +143,22 @@ class ProductRestAdapterTest {
         adapter.findCardsByCustomer("cust-A").test().awaitDone(5, TimeUnit.SECONDS)
                 .assertError(DownstreamServiceUnavailableException.class);
     }
+
+    @Test
+    void aPersonalCreditIsPersonalCreditAndMissingAmountsStayEmpty() {
+        creditService.stubFor(get(urlEqualTo("/credits/cr-2")).willReturn(okJson("""
+                { "id": "cr-2", "customerId": "cust-A", "ownerType": "PERSONAL", "status": "OVERDUE" }
+                """)));
+        creditService.stubFor(get(urlEqualTo("/credit-cards/cc-2")).willReturn(okJson("""
+                { "id": "cc-2", "customerId": "cust-A", "status": "CLOSED" }
+                """)));
+
+        ReportProduct credit = find(ProductType.CREDIT, "cr-2");
+        ReportProduct card = find(ProductType.CREDIT_CARD, "cc-2");
+
+        assertThat(credit.category()).isEqualTo(ProductCategory.PERSONAL_CREDIT);
+        assertThat(credit.attributes().principalAmount()).isNull();
+        assertThat(card.attributes().creditLimit()).isNull();
+        assertThat(card.status()).isEqualTo(ProductStatus.CLOSED);
+    }
 }

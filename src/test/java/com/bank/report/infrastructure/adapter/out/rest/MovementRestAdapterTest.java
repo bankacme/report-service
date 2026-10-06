@@ -18,6 +18,7 @@ import com.bank.report.domain.model.MovementType;
 import com.bank.report.domain.model.ProductType;
 import com.bank.report.domain.model.ReportMovement;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -151,5 +152,23 @@ class MovementRestAdapterTest {
                 .withFixedDelay(2500)));
         adapter.findLast("acc-1", 10).test().awaitDone(5, TimeUnit.SECONDS)
                 .assertError(DownstreamServiceUnavailableException.class);
+    }
+
+    @Test
+    void afterFourFailuresTheCircuitOpensAndTransactionServiceIsNotCalledAgain() {
+        // Mismos umbrales que bank-config: ventana de 4, mínimo 4 llamadas, 50 %.
+        transactionService.stubFor(get(urlPathEqualTo(PATH)).willReturn(aResponse().withStatus(500)));
+        for (int i = 0; i < 4; i++) {
+            adapter.countInRange("acc-1", SEPTEMBER).test().awaitDone(5, TimeUnit.SECONDS)
+                    .assertError(DownstreamServiceUnavailableException.class);
+        }
+
+        long start = System.currentTimeMillis();
+        adapter.countInRange("acc-1", SEPTEMBER).test().awaitDone(5, TimeUnit.SECONDS)
+                .assertError(error -> error instanceof DownstreamServiceUnavailableException
+                        && error.getCause() instanceof CallNotPermittedException);
+
+        assertThat(System.currentTimeMillis() - start).as("ms con el circuito abierto").isLessThan(500L);
+        transactionService.verify(4, getRequestedFor(urlPathEqualTo(PATH)));
     }
 }

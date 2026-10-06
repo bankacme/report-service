@@ -37,8 +37,17 @@ Reportes de solo lectura del sistema bancario (P2, paso 2.6). Ficha:
   - `ProductRestAdapter`: `GET /accounts/{id}`, `/credits/{id}`, `/credit-cards/{id}` y `/credit-cards?customerId=`; categoría, estado y cabecera según data-model 3.1; `debit-cards` → 501.
   - `MovementRestAdapter`: siempre `GET /products/{id}/transactions?status=COMPLETED`. Conteo con `size=1` (`totalElements`), intervalo completo recorriendo páginas de 100, saldo inicial con `to = from − 1` sin `from` y `size=1`, últimos N con `size=N`.
   - Pruebas con WireMock: mapeo de campos, varias páginas, 404, 500 y timeout.
-- [ ] R8. Calidad.
-- [ ] R9. Postman.
+- [x] R8. Calidad: Checkstyle limpio; Jacoco ~98 % de instrucciones y líneas (las ramas sin cubrir son validaciones de `null` de los records). Estrategia de la ficha §10:
+
+  | Capa | Pruebas |
+  |---|---|
+  | Calculadoras | `ProductReportCalculatorTest` (ejemplo de data-model §8, sin movimientos, revertidos, sin saldo inicial), `LastMovementsSelectorTest` (menos de N, revertidos) |
+  | VO | `DateRangeTest` (inválido, 366 vs 367 días, zona Lima), `PageRequestTest`, `MovementPageTest`, `ModelTest` |
+  | Casos de uso | Reporte (paginación, resumen de todo el intervalo, 404, tipo equivocado, `RANGE_TOO_LARGE` sin traer movimientos), últimos N (límite), tarjetas de un cliente (sin 404, débito en P2) |
+  | Adaptadores REST | WireMock: mapeo, varias páginas, 404, 500, timeout y **circuito abierto** (la 5.ª llamada no llega a la fuente) |
+  | Controller | Códigos 400/404/422/501/503, parámetros obligatorios y fuera de rango |
+  | Fuera de P2 | Roles y `CUSTOMER` sobre productos ajenos (P3, con seguridad), proyección y consultas Mongo (P3) |
+- [x] R9. Postman: carpeta `report-service` en `bankacme.postman_collection.json` (entre la de VIP/PYME y la del Gateway), variable `reportBaseUrl` = `http://localhost:8080/api/v1`. 15 requests: reporte completo del ahorro de A (cabecera, resumen, orden, saldo final = movimiento más reciente), página 2 con el mismo resumen, reporte del crédito de A, últimos 10 y últimos 2 de la tarjeta de A, tarjetas de A y de un cliente sin tarjetas, y los errores 400/404/501. Intervalo fijo de 2026. Verificada contra los datos reales (40 comprobaciones).
 - [ ] R10. Cierre.
 
 ## Comandos
